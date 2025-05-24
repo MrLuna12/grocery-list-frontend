@@ -1,18 +1,24 @@
 import React, { useState } from 'react';
-import { StyleSheet, View, TextInput, TouchableOpacity, Text } from 'react-native';
+import { StyleSheet, View, TextInput, TouchableOpacity, Text, Alert } from 'react-native';
 import { router } from 'expo-router';
+import { useAuth } from '../../context/AuthContext';
 
 export default function LoginScreen() {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
+    const { login, isLoading } = useAuth();
 
-    const handleLogin = () => {
-        // We'll implement this in Step 6
-        console.log('Login pressed');
+    const handleLogin = async () => {
+        try {
+            await login(email, password);
+            router.replace('/');
+        } catch (error) {
+            Alert.alert('Error', error instanceof Error ? error.message : 'Failed to login');
+        }
     };
 
     const navigateToRegister = () => {
-        router.push('/register');
+        router.push('/(auth)/register');
     };
 
     return (
@@ -25,6 +31,7 @@ export default function LoginScreen() {
                     onChangeText={setEmail}
                     autoCapitalize="none"
                     keyboardType="email-address"
+                    editable={!isLoading}
                 />
                 <TextInput
                     style={styles.input}
@@ -32,11 +39,18 @@ export default function LoginScreen() {
                     value={password}
                     onChangeText={setPassword}
                     secureTextEntry
+                    editable={!isLoading}
                 />
-                <TouchableOpacity style={styles.button} onPress={handleLogin}>
-                    <Text style={styles.buttonText}>Login</Text>
+                <TouchableOpacity
+                    style={[styles.button, isLoading && styles.buttonDisabled]}
+                    onPress={handleLogin}
+                    disabled={isLoading}
+                >
+                    <Text style={styles.buttonText}>
+                        {isLoading ? 'Logging in...' : 'Login'}
+                    </Text>
                 </TouchableOpacity>
-                <TouchableOpacity onPress={navigateToRegister}>
+                <TouchableOpacity onPress={navigateToRegister} disabled={isLoading}>
                     <Text style={styles.link}>Don't have an account? Register</Text>
                 </TouchableOpacity>
             </View>
@@ -72,6 +86,9 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         alignItems: 'center',
         marginTop: 10,
+    },
+    buttonDisabled: {
+        backgroundColor: '#ccc',
     },
     buttonText: {
         color: '#fff',
