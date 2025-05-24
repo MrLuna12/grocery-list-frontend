@@ -1,8 +1,10 @@
 import { FontAwesome } from '@expo/vector-icons';
 import { Tabs } from 'expo-router';
+import { ProtectedRoute } from '../../components/ProtectedRoute';
 
 export default function TabLayout() {
   return (
+    <ProtectedRoute>
     <Tabs
       screenOptions={{
         tabBarActiveTintColor: '#007AFF',
@@ -19,5 +21,6 @@ export default function TabLayout() {
         }}
       />
     </Tabs>
+    </ProtectedRoute>
   );
 } 
