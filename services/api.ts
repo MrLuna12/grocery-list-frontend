@@ -4,7 +4,7 @@ import Constants from 'expo-constants';
 interface LoginResponse {
     token: string;
     user: {
-        id: string;
+        id: number;
         email: string;
     };
 }
@@ -12,7 +12,7 @@ interface LoginResponse {
 interface RegisterResponse {
     token: string;
     user: {
-        id: string;
+        id: number;
         email: string;
     };
 }
@@ -49,7 +49,7 @@ export async function loginUser(email: string, password: string): Promise<LoginR
 // Register Function
 export async function registerUser(email: string, password: string): Promise<RegisterResponse> {
     return fetchAPI('/auth/register', {
-      method: 'POST',
-      body: JSON.stringify({ email, password }),
+        method: 'POST',
+        body: JSON.stringify({ email, password }),
     });
-  }
+}

@@ -3,7 +3,7 @@ import { loginUser, registerUser } from '../services/api';
 
 //Define the shape of our user
 interface User {
-    id: string;
+    id: number;
     email: string;
 }
 
