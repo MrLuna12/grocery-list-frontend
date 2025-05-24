@@ -1,0 +1,117 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+# React Native + Expo + TypeScript Development Rules
+
+## File Naming & Organization
+- Use PascalCase for React components (e.g., UserProfile.tsx, HomeScreen.tsx)
+- Use camelCase for utilities, hooks, and non-component files (e.g., apiClient.ts, useAuth.ts)
+- Use kebab-case for directories (e.g., user-profile/, api-client/)
+- Prefix custom hooks with "use" (e.g., useAuth, useApiCall)
+- Use .tsx for components, .ts for utilities
+- Keep screen components in /app/(tabs)/ or /app/ following Expo Router structure
+
+## Component Structure
+- Always use TypeScript interfaces for props
+- Define props interface above component: `interface ComponentNameProps {}`
+- Use functional components with hooks
+- Order component sections: imports, interfaces, component definition, styles
+- Export components as default at bottom of file
+- Use memo() for expensive components that receive stable props
+
+## TypeScript Best Practices
+- Enable strict mode in tsconfig.json
+- Use proper typing for all props, state, and function parameters
+- Define API response types in types/ directory
+- Use utility types (Pick, Omit, Partial) when appropriate
+- Avoid 'any' type - use 'unknown' if truly unknown
+- Create union types for string literals (e.g., type Status = 'loading' | 'success' | 'error')
+
+## State Management
+- Use React Context for global state (auth, theme, user preferences)
+- Use useState for local component state
+- Use useReducer for complex state logic
+- Consider Zustand for complex global state management
+- Keep state as close to usage as possible
+- Use proper TypeScript typing for all state
+
+## Navigation (Expo Router)
+- Follow file-based routing structure in /app directory
+- Use typed navigation: define RootStackParamList
+- Pass typed params using router.push with proper typing
+- Use layout files (_layout.tsx) for nested navigation
+- Implement proper screen options in layout files
+- Use useLocalSearchParams() with proper typing
+
+## API Integration
+- Create centralized API client using fetch or axios
+- Define all API endpoints in constants/endpoints.ts
+- Use custom hooks for API calls (e.g., useGetUser, useCreatePost)
+- Implement proper error handling with try/catch
+- Use React Query or SWR for caching and synchronization
+- Type all API responses with interfaces in types/api.ts
+- Follow RESTful naming: GET /users, POST /users, PUT /users/:id
+
+## Error Handling
+- Create centralized error boundary component
+- Use proper error types, not just 'Error'
+- Display user-friendly error messages
+- Log errors appropriately (consider expo-logs)
+- Handle network errors gracefully
+- Provide fallback UI for error states
+- Use toast notifications for temporary errors
+
+## Testing
+- Use Jest + React Native Testing Library
+- Place tests adjacent to components: Component.test.tsx
+- Test user interactions, not implementation details
+- Mock API calls in tests
+- Use proper TypeScript in tests
+- Test accessibility features
+- Aim for meaningful test descriptions
+
+## Styling & UI
+- Use StyleSheet.create() for styles
+- Define colors, fonts, spacing in theme constants
+- Use Expo Vector Icons for consistent iconography
+- Follow platform-specific design patterns
+- Use proper accessibility props (accessibilityLabel, accessibilityRole)
+- Consider react-native-reanimated for complex animations
+
+## Performance
+- Use FlatList for large lists, not ScrollView
+- Implement proper key props for list items
+- Optimize images with proper resizeMode
+- Use lazy loading for screens when appropriate
+- Minimize re-renders with useMemo and useCallback
+- Use Flipper or Expo Dev Tools for performance monitoring
+## Security
+- Store sensitive data in Expo SecureStore
+- Validate all user inputs
+- Use HTTPS for all API calls
+- Implement proper authentication token handling
+- Don't log sensitive information
+- Use proper deep linking validation
+
+## Import Organization
+1. React and React Native imports
+2. Third-party library imports
+3. Local component imports
+4. Type imports (with 'type' keyword)
+5. Relative imports
+
+## Code Quality
+- Use ESLint + Prettier with consistent configuration
+- Write JSDoc comments for complex functions
+- Use descriptive variable and function names
+- Keep functions small and focused
+- Extract reusable logic into custom hooks
+- Follow React Native best practices for platform-specific code
+
+## Environment & Configuration
+- Use expo-constants for app configuration
+- Store environment variables in .env files
+- Use different configurations for dev/staging/production
+- Never commit sensitive keys or tokens
