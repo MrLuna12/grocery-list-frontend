@@ -1,68 +1,143 @@
-import React, { createContext, useContext, useState } from 'react';
+import React, { createContext, useContext, useState, useEffect } from 'react';
+import * as SecureStore from 'expo-secure-store';
 import { loginUser, registerUser } from '../services/api';
+import { ValidationUtils } from '../utils/validation';
 
-//Define the shape of our user
 interface User {
     id: number;
     email: string;
 }
 
-// Define the shape of our context
 interface AuthContextType {
     user: User | null;
     isLoading: boolean;
     error: string | null;
     login: (email: string, password: string) => Promise<void>;
     register: (email: string, password: string) => Promise<void>;
-    logout: () => void;
+    logout: () => Promise<void>;
+    getToken: () => Promise<string | null>;
 }
 
-// Create the context with a default value
+const AUTH_TOKEN_KEY = 'auth_token';
+const USER_DATA_KEY = 'user_data';
+
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// Create a provider component
 export function AuthProvider({ children }: { children: React.ReactNode }) {
     const [user, setUser] = useState<User | null>(null);
-    const [isLoading, setIsLoading] = useState(false);
+    const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
-    // Login Function
+    useEffect(() => {
+        checkStoredAuth();
+    }, []);
+
+    const checkStoredAuth = async () => {
+        try {
+            const storedToken = await SecureStore.getItemAsync(AUTH_TOKEN_KEY);
+            const storedUserData = await SecureStore.getItemAsync(USER_DATA_KEY);
+            
+            if (storedToken && storedUserData) {
+                const userData = JSON.parse(storedUserData);
+                setUser(userData);
+            }
+        } catch (error) {
+            console.log('Error checking stored auth');
+            await clearAuthData();
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const storeAuthData = async (authToken: string, userData: User) => {
+        try {
+            await SecureStore.setItemAsync(AUTH_TOKEN_KEY, authToken);
+            await SecureStore.setItemAsync(USER_DATA_KEY, JSON.stringify(userData));
+            setUser(userData);
+        } catch (error) {
+            throw new Error('Failed to store authentication data securely');
+        }
+    };
+
+    const clearAuthData = async () => {
+        try {
+            await SecureStore.deleteItemAsync(AUTH_TOKEN_KEY);
+            await SecureStore.deleteItemAsync(USER_DATA_KEY);
+            setUser(null);
+        } catch (error) {
+            console.log('Error clearing auth data');
+        }
+    };
+
+    const getToken = async (): Promise<string | null> => {
+        try {
+            return await SecureStore.getItemAsync(AUTH_TOKEN_KEY);
+        } catch (error) {
+            return null;
+        }
+    };
+
+    // Login with validation - but using shared validation utils
     const login = async (email: string, password: string) => {
         try {
             setIsLoading(true);
             setError(null);
-            const response = await loginUser(email, password);
-            setUser(response.user);
+
+            // Use shared validation (single source of truth)
+            const emailValidation = ValidationUtils.validateEmail(email);
+            if (!emailValidation.isValid) {
+                throw new Error(emailValidation.error);
+            }
+
+            const passwordValidation = ValidationUtils.validatePassword(password);
+            if (!passwordValidation.isValid) {
+                throw new Error(passwordValidation.error);
+            }
+
+            // API call handles its own validation too (defense in depth)
+            const response = await loginUser(emailValidation.sanitized, password);
+            await storeAuthData(response.token, response.user);
         } catch (err) {
-            setError(err instanceof Error ? err.message : 'An error occurred');
+            const errorMessage = err instanceof Error ? err.message : 'Login failed';
+            setError(errorMessage);
             throw err;
         } finally {
             setIsLoading(false);
         }
     };
 
-    // Register function
     const register = async (email: string, password: string) => {
         try {
             setIsLoading(true);
             setError(null);
-            const response = await registerUser(email, password);
-            setUser(response.user);
+
+            // Use shared validation
+            const emailValidation = ValidationUtils.validateEmail(email);
+            if (!emailValidation.isValid) {
+                throw new Error(emailValidation.error);
+            }
+
+            const passwordValidation = ValidationUtils.validatePassword(password);
+            if (!passwordValidation.isValid) {
+                throw new Error(passwordValidation.error);
+            }
+
+            const response = await registerUser(emailValidation.sanitized, password);
+            await storeAuthData(response.token, response.user);
         } catch (err) {
-            setError(err instanceof Error ? err.message : 'An error occurred');
+            const errorMessage = err instanceof Error ? err.message : 'Registration failed';
+            setError(errorMessage);
             throw err;
         } finally {
             setIsLoading(false);
         }
     };
 
-    // Logout function
-    const logout = () => {
-        setUser(null);
+    const logout = async () => {
+        await clearAuthData();
         setError(null);
     };
 
-    // Create the value object that will be provided to consumers
     const value = {
         user,
         isLoading,
@@ -70,12 +145,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         login,
         register,
         logout,
+        getToken,
     };
 
     return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 
-// Create a custom hook to use the auth context
 export function useAuth() {
     const context = useContext(AuthContext);
     if (context === undefined) {
