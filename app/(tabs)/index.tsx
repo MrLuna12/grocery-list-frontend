@@ -2,11 +2,15 @@ import { StyleSheet, Text, View, TouchableOpacity } from 'react-native';
 import { useState } from 'react';
 
 function EmptyState() {
+  const handleCreateFirstList = () => {
+    console.log('Creating first grocery list...');
+    // Later: This will call your Rails API
+  };
   return (
     <View style={styles.emptyState}>
       <Text style={styles.emptyTitle}>You have no grocery lists yet!</Text>
       <Text style={styles.emptySubtitle}>Create your first list to get started</Text>
-      <TouchableOpacity style={styles.createButton} onPress={() => alert('Button pressed!')}>
+      <TouchableOpacity style={styles.createButton} onPress={handleCreateFirstList}>
         <Text style={styles.createButtonText}>Create First List</Text>
       </TouchableOpacity>
     </View>
