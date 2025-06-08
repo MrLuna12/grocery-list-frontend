@@ -1,4 +1,4 @@
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View, TouchableOpacity } from 'react-native';
 import { useState } from 'react';
 
 function EmptyState() {
@@ -6,6 +6,9 @@ function EmptyState() {
     <View style={styles.emptyState}>
       <Text style={styles.emptyTitle}>You have no grocery lists yet!</Text>
       <Text style={styles.emptySubtitle}>Create your first list to get started</Text>
+      <TouchableOpacity style={styles.createButton} onPress={() => alert('Button pressed!')}>
+        <Text style={styles.createButtonText}>Create First List</Text>
+      </TouchableOpacity>
     </View>
   );
 }
@@ -47,6 +50,19 @@ const styles = StyleSheet.create({
   emptySubtitle: {
     fontSize: 16,
     color: '#666',
+    textAlign: 'center',
+  },
+  createButton: {
+    backgroundColor: '#007AFF',
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    borderRadius: 8,
+    marginTop: 24,
+  },
+  createButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: 'bold',
     textAlign: 'center',
   },
 });
