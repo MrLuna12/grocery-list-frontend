@@ -1,16 +1,18 @@
 import { StyleSheet, Text, View, TouchableOpacity } from 'react-native';
 import { useState } from 'react';
+import { createGroceryList } from '../../services/api';
+import { useAuth } from '../../context/AuthContext';
 
-function EmptyState() {
-  const handleCreateFirstList = () => {
-    console.log('Creating first grocery list...');
-    // Later: This will call your Rails API
-  };
+interface EmptyStateProps {
+  onCreateFirstList: () => void;
+}
+
+function EmptyState({ onCreateFirstList }: EmptyStateProps) {
   return (
     <View style={styles.emptyState}>
       <Text style={styles.emptyTitle}>You have no grocery lists yet!</Text>
       <Text style={styles.emptySubtitle}>Create your first list to get started</Text>
-      <TouchableOpacity style={styles.createButton} onPress={handleCreateFirstList}>
+      <TouchableOpacity style={styles.createButton} onPress={onCreateFirstList}>
         <Text style={styles.createButtonText}>Create First List</Text>
       </TouchableOpacity>
     </View>
@@ -19,10 +21,31 @@ function EmptyState() {
 
 export default function HomeScreen() {
   const [groceryLists, setGroceryLists] = useState([]);
+  const { getToken } = useAuth(); // Add this line
+
+  const handleCreateFirstList = async () => {
+    try {
+      console.log('Creating first grocery list...');
+      const token = await getToken();
+
+      console.log('Token received:', token); // Add this line to see the token
+
+      if (!token) {
+        console.log('No auth token found');
+        return; // Exit early if no token
+      }
+
+      const newList = await createGroceryList({ title: "My First List" }, token);
+      console.log('Created list:', newList);
+    } catch (error) {
+      console.log('Error creating list:', error);
+    }
+  };
+
   return (
     <View style={styles.container}>
       {groceryLists.length === 0 ? (
-        <EmptyState />
+        <EmptyState onCreateFirstList={handleCreateFirstList} />
       ) : (
         <Text style={styles.text}>You have {groceryLists.length} lists!</Text>
       )}
