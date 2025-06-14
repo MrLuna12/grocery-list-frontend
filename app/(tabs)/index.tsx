@@ -1,6 +1,6 @@
 import { StyleSheet, Text, View, TouchableOpacity } from 'react-native';
 import { useState } from 'react';
-import { createGroceryList } from '../../services/api';
+import { createGroceryList, fetchGroceryLists, GroceryList } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
 
 interface EmptyStateProps {
@@ -20,7 +20,7 @@ function EmptyState({ onCreateFirstList }: EmptyStateProps) {
 }
 
 export default function HomeScreen() {
-  const [groceryLists, setGroceryLists] = useState([]);
+  const [groceryLists, setGroceryLists] = useState<GroceryList[]>([]);
   const { getToken } = useAuth(); // Add this line
 
   const handleCreateFirstList = async () => {
@@ -35,8 +35,10 @@ export default function HomeScreen() {
         return; // Exit early if no token
       }
 
-      const newList = await createGroceryList({ title: "My First List" }, token);
+      const newList = await createGroceryList({ title: "My First List 2" }, token);
       console.log('Created list:', newList);
+      const allLists = await fetchGroceryLists(token);
+      setGroceryLists(allLists);
     } catch (error) {
       console.log('Error creating list:', error);
     }
