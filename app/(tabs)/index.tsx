@@ -1,4 +1,4 @@
-import { StyleSheet, Text, View, TouchableOpacity } from 'react-native';
+import { StyleSheet, Text, View, TouchableOpacity, Modal, TextInput, SafeAreaView } from 'react-native';
 import { useState } from 'react';
 import { createGroceryList, fetchGroceryLists, GroceryList } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
@@ -64,6 +64,44 @@ export default function HomeScreen() {
       ) : (
         <Text style={styles.text}>You have {groceryLists.length} lists!</Text>
       )}
+      <Modal
+        visible={isModalVisible}
+        animationType='slide'
+        transparent={true}
+        onRequestClose={handleCloseModal}
+      >
+
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Create New List</Text>
+            <TextInput
+              style={styles.textInput}
+              placeholder='Enter list name...'
+              value={listNameInput}
+              onChangeText={setListNameInput}
+              autoFocus={true}
+              maxLength={50}>
+            </TextInput>
+
+            <View style={styles.modalButtons}>
+              <TouchableOpacity
+                style={styles.cancelButton}
+                onPress={handleCloseModal}
+              >
+                <Text style={styles.cancelButtonText}>Cancel</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={styles.createModalButton}
+                onPress={handleCreateFirstList}
+                disabled={listNameInput.trim().length === 0}
+              >
+                <Text style={styles.createModalButtonText}>Create</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -106,5 +144,67 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: 'bold',
     textAlign: 'center',
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalContent: {
+    backgroundColor: '#fff',
+    margin: 20,
+    borderRadius: 12,
+    padding: 24,
+    alignItems: 'center',
+    minWidth: 300,
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    marginBottom: 20,
+    textAlign: 'center',
+  },
+  textInput: {
+    borderWidth: 1,
+    borderColor: '#ddd',
+    borderRadius: 8,
+    padding: 12,
+    fontSize: 16,
+    width: '100%',
+    marginBottom: 20,
+    minWidth: 250,
+    textAlign: 'left',
+  },
+  modalButtons: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    width: '100%',
+  },
+  cancelButton: {
+    flex: 1,
+    padding: 12,
+    marginRight: 8,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#ddd',
+    alignItems: 'center',
+  },
+  cancelButtonText: {
+    fontSize: 16,
+    color: '#666',
+  },
+  createModalButton: {
+    flex: 1,
+    padding: 12,
+    marginLeft: 8,
+    borderRadius: 8,
+    backgroundColor: '#007AFF',
+    alignItems: 'center',
+  },
+  createModalButtonText: {
+    fontSize: 16,
+    color: '#fff',
+    fontWeight: 'bold',
   },
 });
