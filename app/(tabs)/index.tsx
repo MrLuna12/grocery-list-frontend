@@ -1,7 +1,8 @@
-import { StyleSheet, Text, View, TouchableOpacity, Modal, TextInput, ActivityIndicator } from 'react-native';
+import { StyleSheet, Text, View, TouchableOpacity } from 'react-native';
 import { useState } from 'react';
 import { createGroceryList, fetchGroceryLists, GroceryList } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
+import CreateListModal from '../../components/CreateListModal';
 
 interface EmptyStateProps {
   onCreateFirstList: () => void;
@@ -22,57 +23,28 @@ function EmptyState({ onCreateFirstList }: EmptyStateProps) {
 export default function HomeScreen() {
   const [groceryLists, setGroceryLists] = useState<GroceryList[]>([]);
   const [isModalVisible, setIsModalVisible] = useState(false);
-  const [listNameInput, setListNameInput] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
-  const [errorMessage, setErrorMessage] = useState('');
   const { getToken } = useAuth();
 
   const handleOpenModal = () => {
     setIsModalVisible(true);
-  }
+  };
 
   const handleCloseModal = () => {
     setIsModalVisible(false);
-    setListNameInput('');
-    setErrorMessage('');
-  }
+  };
 
-  const handleCreateFirstList = async () => {
-    try {
-      setIsLoading(true);
-      setErrorMessage('');
-      console.log('Creating first grocery list...');
-      const token = await getToken();
-
-      console.log('Token received:', token);
-
-      if (!token) {
-        setErrorMessage('Please log in again');
-        setIsLoading(false)
-        return;
-      }
-
-      const newList = await createGroceryList({ title: listNameInput }, token);
-      console.log('Created list:', newList);
-      const allLists = await fetchGroceryLists(token);
-      // setGroceryLists(allLists);
-
-      handleCloseModal();
-    } catch (error: any) {
-      console.log('Error creating list:', error);
-
-      let userMessage = 'Failed to create list. Please try again.';
-
-      if (error.message.includes('has already been taken')) {
-        userMessage = 'List title already exist';
-      } else if (error.message.includes('can\'t be blank')) {
-        userMessage = 'Please enter a list title.';
-      }
-
-      setErrorMessage(userMessage);
-    } finally {
-      setIsLoading(false)
+  const handleCreateList = async (listName: string) => {
+    const token = await getToken();
+    
+    if (!token) {
+      throw new Error('Please log in again');
     }
+
+    const newList = await createGroceryList({ title: listName }, token);
+    console.log('Created list:', newList);
+    
+    const allLists = await fetchGroceryLists(token);
+    setGroceryLists(allLists);
   };
 
   return (
@@ -82,61 +54,12 @@ export default function HomeScreen() {
       ) : (
         <Text style={styles.text}>You have {groceryLists.length} lists!</Text>
       )}
-      <Modal
+
+      <CreateListModal
         visible={isModalVisible}
-        animationType='slide'
-        transparent={true}
-        onRequestClose={handleCloseModal}
-      >
-
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Create New List</Text>
-            <TextInput
-              style={styles.textInput}
-              placeholder='Enter list name...'
-              value={listNameInput}
-              onChangeText={(text) => {
-                setListNameInput(text);
-                if (errorMessage) setErrorMessage('');
-              }}
-              autoFocus={true}
-              maxLength={50}>
-            </TextInput>
-
-            {errorMessage ? (
-              <Text style={styles.errorText}>{errorMessage}</Text>
-            ) : null}
-
-            <View style={styles.modalButtons}>
-              <TouchableOpacity
-                style={styles.cancelButton}
-                onPress={handleCloseModal}
-              >
-                <Text style={styles.cancelButtonText}>Cancel</Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                style={[
-                  styles.createModalButton,
-                  (isLoading || listNameInput.trim().length === 0) && styles.disabledButton
-                ]}
-                onPress={handleCreateFirstList}
-                disabled={isLoading || listNameInput.trim().length === 0}
-              >
-                {isLoading ? (
-                  <View style={styles.loadingContainer}>
-                    <ActivityIndicator size="small" color="#fff" />
-                    <Text style={styles.createModalButtonText}>Creating...</Text>
-                  </View>
-                ) : (
-                  <Text style={styles.createModalButtonText}>Create</Text>
-                )}
-              </TouchableOpacity>
-            </View>
-          </View>
-        </View>
-      </Modal>
+        onClose={handleCloseModal}
+        onCreateList={handleCreateList}
+      />
     </View>
   );
 }
@@ -179,82 +102,5 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: 'bold',
     textAlign: 'center',
-  },
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  modalContent: {
-    backgroundColor: '#fff',
-    margin: 20,
-    borderRadius: 12,
-    padding: 24,
-    alignItems: 'center',
-    minWidth: 300,
-  },
-  modalTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    marginBottom: 20,
-    textAlign: 'center',
-  },
-  textInput: {
-    borderWidth: 1,
-    borderColor: '#ddd',
-    borderRadius: 8,
-    padding: 12,
-    fontSize: 16,
-    width: '100%',
-    marginBottom: 20,
-    minWidth: 250,
-    textAlign: 'left',
-  },
-  modalButtons: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    width: '100%',
-  },
-  cancelButton: {
-    flex: 1,
-    padding: 12,
-    marginRight: 8,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#ddd',
-    alignItems: 'center',
-  },
-  cancelButtonText: {
-    fontSize: 16,
-    color: '#666',
-  },
-  createModalButton: {
-    flex: 1,
-    padding: 12,
-    marginLeft: 8,
-    borderRadius: 8,
-    backgroundColor: '#007AFF',
-    alignItems: 'center',
-  },
-  createModalButtonText: {
-    fontSize: 16,
-    color: '#fff',
-    fontWeight: 'bold',
-  },
-  disabledButton: {
-    backgroundColor: '#ccc',
-  },
-  loadingContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  errorText: {
-    color: '#ff3333',
-    fontSize: 14,
-    textAlign: 'center',
-    marginBottom: 15,
-    paddingHorizontal: 10,
   },
 });
