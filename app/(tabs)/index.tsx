@@ -21,18 +21,29 @@ function EmptyState({ onCreateFirstList }: EmptyStateProps) {
 
 export default function HomeScreen() {
   const [groceryLists, setGroceryLists] = useState<GroceryList[]>([]);
-  const { getToken } = useAuth(); // Add this line
+  const [isModalVisible, setIsModalVisible] = useState(false);
+  const [listNameInput, setListNameInput] = useState('');
+  const { getToken } = useAuth();
+
+  const handleOpenModal = () => {
+    setIsModalVisible(true);
+  }
+
+  const handleCloseModal = () => {
+    setIsModalVisible(false);
+    setListNameInput('');
+  }
 
   const handleCreateFirstList = async () => {
     try {
       console.log('Creating first grocery list...');
       const token = await getToken();
 
-      console.log('Token received:', token); // Add this line to see the token
+      console.log('Token received:', token);
 
       if (!token) {
         console.log('No auth token found');
-        return; // Exit early if no token
+        return;
       }
 
       const newList = await createGroceryList({ title: "My First List 2" }, token);
