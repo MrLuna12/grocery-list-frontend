@@ -1,4 +1,4 @@
-import { StyleSheet, Text, View, TouchableOpacity, Modal, TextInput, SafeAreaView } from 'react-native';
+import { StyleSheet, Text, View, TouchableOpacity, Modal, TextInput, ActivityIndicator } from 'react-native';
 import { useState } from 'react';
 import { createGroceryList, fetchGroceryLists, GroceryList } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
@@ -23,6 +23,7 @@ export default function HomeScreen() {
   const [groceryLists, setGroceryLists] = useState<GroceryList[]>([]);
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [listNameInput, setListNameInput] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
   const { getToken } = useAuth();
 
   const handleOpenModal = () => {
@@ -36,6 +37,7 @@ export default function HomeScreen() {
 
   const handleCreateFirstList = async () => {
     try {
+      setIsLoading(true);
       console.log('Creating first grocery list...');
       const token = await getToken();
 
@@ -43,6 +45,7 @@ export default function HomeScreen() {
 
       if (!token) {
         console.log('No auth token found');
+        setIsLoading(false)
         return;
       }
 
@@ -54,6 +57,8 @@ export default function HomeScreen() {
       handleCloseModal();
     } catch (error) {
       console.log('Error creating list:', error);
+    } finally {
+      setIsLoading(false)
     }
   };
 
@@ -92,11 +97,21 @@ export default function HomeScreen() {
               </TouchableOpacity>
 
               <TouchableOpacity
-                style={styles.createModalButton}
+                style={[
+                  styles.createModalButton,
+                  (isLoading || listNameInput.trim().length === 0) && styles.disabledButton
+                ]}
                 onPress={handleCreateFirstList}
-                disabled={listNameInput.trim().length === 0}
+                disabled={isLoading || listNameInput.trim().length === 0}
               >
-                <Text style={styles.createModalButtonText}>Create</Text>
+                {isLoading ? (
+                  <View style={styles.loadingContainer}>
+                    <ActivityIndicator size="small" color="#fff" />
+                    <Text style={styles.createModalButtonText}>Creating...</Text>
+                  </View>
+                ) : (
+                  <Text style={styles.createModalButtonText}>Create</Text>
+                )}
               </TouchableOpacity>
             </View>
           </View>
@@ -206,5 +221,13 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#fff',
     fontWeight: 'bold',
+  },
+  disabledButton: {
+    backgroundColor: '#ccc',
+  },
+  loadingContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 });
