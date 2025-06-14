@@ -46,10 +46,12 @@ export default function HomeScreen() {
         return;
       }
 
-      const newList = await createGroceryList({ title: "My First List 2" }, token);
+      const newList = await createGroceryList({ title: listNameInput }, token);
       console.log('Created list:', newList);
       const allLists = await fetchGroceryLists(token);
       setGroceryLists(allLists);
+
+      handleCloseModal();
     } catch (error) {
       console.log('Error creating list:', error);
     }
@@ -58,7 +60,7 @@ export default function HomeScreen() {
   return (
     <View style={styles.container}>
       {groceryLists.length === 0 ? (
-        <EmptyState onCreateFirstList={handleCreateFirstList} />
+        <EmptyState onCreateFirstList={handleOpenModal} />
       ) : (
         <Text style={styles.text}>You have {groceryLists.length} lists!</Text>
       )}
