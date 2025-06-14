@@ -42,7 +42,7 @@ interface CreateGroceryListRequest {
 // Secure API configuration
 const getApiUrl = (): string => {
     const configUrl = Constants.expoConfig?.extra?.apiUrl;
-    
+
     if (configUrl) {
         if (__DEV__) {
             return configUrl; // Allow HTTP in development
@@ -50,7 +50,7 @@ const getApiUrl = (): string => {
             return configUrl.replace(/^http:/, 'https:'); // Force HTTPS in production
         }
     }
-    
+
     return __DEV__ ? 'http://localhost:3000/api/v1' : 'https://your-production-api.com/api/v1';
 };
 
@@ -69,7 +69,7 @@ async function fetchAPI(endpoint: string, options: RequestInit = {}, token?: str
         }
 
         const url = `${API_URL}${endpoint}`;
-        
+
         // Use shared security utility
         SecurityUtils.requireSecureConnection(url);
 
@@ -88,19 +88,21 @@ async function fetchAPI(endpoint: string, options: RequestInit = {}, token?: str
 
         if (!response.ok) {
             let errorMessage = 'Something went wrong';
-            
+
             try {
                 const errorData = await response.json();
-                errorMessage = errorData.message || errorData.error || errorMessage;
+                if (errorData.title) {
+                    errorMessage = `Title ${errorData.title[0]}`;
+                } else if (errorData.name) {
+                    errorMessage = `Name ${errorData.name[0]}`;
+                } else {
+                    errorMessage = errorData.message || errorData.error || 'Something went wrong';
+                }
+
             } catch {
                 errorMessage = response.statusText || errorMessage;
             }
-            
-            // Don't expose internal server errors in production
-            if (!__DEV__ && response.status >= 500) {
-                errorMessage = 'Service temporarily unavailable';
-            }
-            
+
             throw new Error(errorMessage);
         }
 
@@ -122,7 +124,7 @@ export async function loginUser(email: string, password: string): Promise<LoginR
     if (!emailValidation.isValid) {
         throw new Error(emailValidation.error || 'Invalid email');
     }
-    
+
     const passwordValidation = ValidationUtils.validatePassword(password);
     if (!passwordValidation.isValid) {
         throw new Error(passwordValidation.error || 'Invalid password');
@@ -130,8 +132,8 @@ export async function loginUser(email: string, password: string): Promise<LoginR
 
     return fetchAPI('/auth/login', {
         method: 'POST',
-        body: JSON.stringify({ 
-            email: emailValidation.sanitized, 
+        body: JSON.stringify({
+            email: emailValidation.sanitized,
             password
         }),
     });
@@ -143,7 +145,7 @@ export async function registerUser(email: string, password: string): Promise<Reg
     if (!emailValidation.isValid) {
         throw new Error(emailValidation.error || 'Invalid email');
     }
-    
+
     const passwordValidation = ValidationUtils.validatePassword(password);
     if (!passwordValidation.isValid) {
         throw new Error(passwordValidation.error || 'Invalid password');
@@ -151,8 +153,8 @@ export async function registerUser(email: string, password: string): Promise<Reg
 
     return fetchAPI('/auth/register', {
         method: 'POST',
-        body: JSON.stringify({ 
-            email: emailValidation.sanitized, 
+        body: JSON.stringify({
+            email: emailValidation.sanitized,
             password
         }),
     });
@@ -200,10 +202,10 @@ export async function fetchGroceryListById(id: number, token: string): Promise<G
 }
 
 // Export types for use in components
-export type { 
-    GroceryList, 
-    Item, 
-    CreateGroceryListRequest, 
-    LoginResponse, 
-    RegisterResponse 
+export type {
+    GroceryList,
+    Item,
+    CreateGroceryListRequest,
+    LoginResponse,
+    RegisterResponse
 };
