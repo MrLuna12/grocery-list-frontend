@@ -24,6 +24,7 @@ export default function HomeScreen() {
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [listNameInput, setListNameInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
   const { getToken } = useAuth();
 
   const handleOpenModal = () => {
@@ -33,18 +34,20 @@ export default function HomeScreen() {
   const handleCloseModal = () => {
     setIsModalVisible(false);
     setListNameInput('');
+    setErrorMessage('');
   }
 
   const handleCreateFirstList = async () => {
     try {
       setIsLoading(true);
+      setErrorMessage('');
       console.log('Creating first grocery list...');
       const token = await getToken();
 
       console.log('Token received:', token);
 
       if (!token) {
-        console.log('No auth token found');
+        setErrorMessage('Please log in again');
         setIsLoading(false)
         return;
       }
@@ -52,11 +55,21 @@ export default function HomeScreen() {
       const newList = await createGroceryList({ title: listNameInput }, token);
       console.log('Created list:', newList);
       const allLists = await fetchGroceryLists(token);
-      setGroceryLists(allLists);
+      // setGroceryLists(allLists);
 
       handleCloseModal();
-    } catch (error) {
+    } catch (error: any) {
       console.log('Error creating list:', error);
+
+      let userMessage = 'Failed to create list. Please try again.';
+
+      if (error.message.includes('has already been taken')) {
+        userMessage = 'List title already exist';
+      } else if (error.message.includes('can\'t be blank')) {
+        userMessage = 'Please enter a list title.';
+      }
+
+      setErrorMessage(userMessage);
     } finally {
       setIsLoading(false)
     }
@@ -83,10 +96,17 @@ export default function HomeScreen() {
               style={styles.textInput}
               placeholder='Enter list name...'
               value={listNameInput}
-              onChangeText={setListNameInput}
+              onChangeText={(text) => {
+                setListNameInput(text);
+                if (errorMessage) setErrorMessage('');
+              }}
               autoFocus={true}
               maxLength={50}>
             </TextInput>
+
+            {errorMessage ? (
+              <Text style={styles.errorText}>{errorMessage}</Text>
+            ) : null}
 
             <View style={styles.modalButtons}>
               <TouchableOpacity
@@ -229,5 +249,12 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  errorText: {
+    color: '#ff3333',
+    fontSize: 14,
+    textAlign: 'center',
+    marginBottom: 15,
+    paddingHorizontal: 10,
   },
 });
