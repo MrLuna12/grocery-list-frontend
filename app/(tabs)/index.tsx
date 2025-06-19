@@ -1,10 +1,11 @@
-import { StyleSheet, Text, View, TouchableOpacity } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { StyleSheet, Text, View, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { useState, useEffect } from 'react';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { createGroceryList, fetchGroceryLists, GroceryList } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
 import CreateListModal from '../../components/CreateListModal';
 import ListDropdown from '../../components/ListDropdown';
+import { MaterialIcons } from '@expo/vector-icons';
 
 interface EmptyStateProps {
   onCreateFirstList: () => void;
@@ -26,7 +27,8 @@ export default function HomeScreen() {
   const [groceryLists, setGroceryLists] = useState<GroceryList[]>([]);
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [selectedList, setSelectedList] = useState<GroceryList | null>(null);
-  const { getToken } = useAuth();
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const { getToken, user, logout } = useAuth();
 
   const handleOpenModal = () => {
     setIsModalVisible(true);
@@ -40,10 +42,10 @@ export default function HomeScreen() {
     try {
       const token = await getToken();
       if (!token) return;
-      
+
       const lists = await fetchGroceryLists(token);
       setGroceryLists(lists);
-      
+
       if (lists.length > 0) {
         if (selectedList) {
           const stillExists = lists.find(list => list.id === selectedList.id);
@@ -71,28 +73,34 @@ export default function HomeScreen() {
     }
 
     const newList = await createGroceryList({ title: listName }, token);
-    console.log('Created list:', newList);
-
     await loadGroceryLists();
-
     setSelectedList(newList);
   };
-
-  useEffect(() => {
-    loadGroceryLists();
-  }, []);
 
   const handleSelectList = (list: GroceryList) => {
     setSelectedList(list);
   };
 
+  const handleLogout = async () => {
+    setIsLoggingOut(true);
+    await logout();
+    setIsLoggingOut(false);
+  };
+
+  useEffect(() => {
+    if (user) {
+      loadGroceryLists();
+    }
+  }, [user]);
+
   return (
     <SafeAreaView style={styles.container}>
-      {groceryLists.length === 0 ? (
-        <EmptyState onCreateFirstList={handleOpenModal} />
-      ) : (
-        <View style={styles.listContainer}>
-          <View style={styles.dropdownContainer}>
+      {/* Custom Header */}
+      <View style={styles.headerContainer}>
+        {groceryLists.length === 0 ? (
+          <Text style={styles.headerTitle}>Grocery Lists</Text>
+        ) : (
+          <View style={styles.headerDropdownContainer}>
             <ListDropdown
               selectedList={selectedList}
               groceryLists={groceryLists}
@@ -100,15 +108,35 @@ export default function HomeScreen() {
               onCreateNew={handleOpenModal}
             />
           </View>
-          
+        )}
+        <TouchableOpacity
+          onPress={handleLogout}
+          disabled={isLoggingOut}
+          style={styles.logoutButton}
+        >
+          {isLoggingOut ? (
+            <ActivityIndicator size="small" color="#007AFF" />
+          ) : (
+            <MaterialIcons name="logout" size={24} color="#007AFF" />
+          )}
+        </TouchableOpacity>
+      </View>
+
+      {groceryLists.length === 0 ? (
+        <EmptyState onCreateFirstList={handleOpenModal} />
+      ) : (
+        <View style={styles.listContainer}>
+          {/* Remove the dropdownContainer section - dropdown is now in header */}
+
+          {/* Main content area */}
           <View style={styles.contentArea}>
             <Text style={styles.listCount}>
               {groceryLists.length} {groceryLists.length === 1 ? 'list' : 'lists'} total
             </Text>
-            
+
             <View style={styles.placeholderContainer}>
               <Text style={styles.placeholder}>
-                {selectedList 
+                {selectedList
                   ? `Items from "${selectedList.title}" will appear here`
                   : 'Select a list to view items'
                 }
@@ -117,13 +145,13 @@ export default function HomeScreen() {
           </View>
         </View>
       )}
-  
+
       <CreateListModal
         visible={isModalVisible}
         onClose={handleCloseModal}
         onCreateList={handleCreateList}
       />
-  </SafeAreaView>
+    </SafeAreaView>
   );
 }
 
@@ -132,17 +160,40 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#fff',
   },
+  // Custom header styles
+  headerContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+    backgroundColor: '#fff',
+    borderBottomWidth: 1,
+    borderBottomColor: '#e0e0e0',
+  },
+  headerDropdownContainer: {
+    flex: 1,
+    marginRight: 16,
+  },
+  headerTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#333',
+  },
+  logoutButton: {
+    padding: 8,
+  },
   listContainer: {
     flex: 1,
   },
+  // Dropdown right below header
   dropdownContainer: {
     paddingHorizontal: 20,
-    paddingTop: 20,
+    paddingTop: 16,
     paddingBottom: 16,
     backgroundColor: '#fff',
-    borderBottomWidth: 1,
-    borderBottomColor: '#f0f0f0',
   },
+  // Main content area
   contentArea: {
     flex: 1,
     alignItems: 'center',
@@ -163,9 +214,12 @@ const styles = StyleSheet.create({
   placeholderContainer: {
     alignItems: 'center',
   },
+  // Empty state styles
   emptyState: {
     alignItems: 'center',
-    paddingHorizontal: 40
+    paddingHorizontal: 40,
+    flex: 1,
+    justifyContent: 'center',
   },
   emptyTitle: {
     fontSize: 24,

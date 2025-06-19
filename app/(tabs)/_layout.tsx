@@ -5,7 +5,6 @@ import { useAuth } from '../../context/AuthContext';
 import { Tabs } from 'expo-router';
 import { MaterialIcons } from '@expo/vector-icons';
 
-
 export default function TabLayout() {
   const { logout } = useAuth();
   const [isLoggingOut, setIsLoggingOut] = useState(false);
@@ -27,20 +26,8 @@ export default function TabLayout() {
         <Tabs.Screen
           name="index"
           options={{
+            headerShown: false,
             title: 'Grocery Lists',
-            headerRight: () => (
-              <TouchableOpacity
-                onPress={handleLogout}
-                disabled={isLoggingOut}
-                style={{ marginRight: 15, padding: 8 }}
-              >
-                {isLoggingOut ? (
-                  <ActivityIndicator size="small" color="#007AFF" />
-                ) : (
-                  <MaterialIcons name="logout" size={24} color="#007AFF" />
-                )}
-              </TouchableOpacity>
-            ),
             tabBarIcon: ({ color }) => (
               <MaterialIcons name="shopping-cart" size={24} color={color} />
             ),
@@ -49,4 +36,4 @@ export default function TabLayout() {
       </Tabs>
     </ProtectedRoute>
   );
-} 
+}
