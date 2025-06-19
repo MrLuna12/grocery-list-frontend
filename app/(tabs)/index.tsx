@@ -1,8 +1,10 @@
 import { StyleSheet, Text, View, TouchableOpacity } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useState, useEffect } from 'react';
 import { createGroceryList, fetchGroceryLists, GroceryList } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
 import CreateListModal from '../../components/CreateListModal';
+import ListDropdown from '../../components/ListDropdown';
 
 interface EmptyStateProps {
   onCreateFirstList: () => void;
@@ -38,12 +40,23 @@ export default function HomeScreen() {
     try {
       const token = await getToken();
       if (!token) return;
-
+      
       const lists = await fetchGroceryLists(token);
       setGroceryLists(lists);
-
-      if (lists.length > 0 && !selectedList) {
-        setSelectedList(lists[0]);
+      
+      if (lists.length > 0) {
+        if (selectedList) {
+          const stillExists = lists.find(list => list.id === selectedList.id);
+          if (stillExists) {
+            setSelectedList(stillExists);
+          } else {
+            setSelectedList(lists[0]);
+          }
+        } else {
+          setSelectedList(lists[0]);
+        }
+      } else {
+        setSelectedList(null);
       }
     } catch (error) {
       console.error('Error loading grocery lists:', error);
@@ -65,54 +78,76 @@ export default function HomeScreen() {
     setSelectedList(newList);
   };
 
-useEffect(() => {
-  loadGroceryLists();
-}, []);
+  useEffect(() => {
+    loadGroceryLists();
+  }, []);
+
+  const handleSelectList = (list: GroceryList) => {
+    setSelectedList(list);
+  };
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container}>
       {groceryLists.length === 0 ? (
         <EmptyState onCreateFirstList={handleOpenModal} />
       ) : (
         <View style={styles.listContainer}>
-          <Text style={styles.selectedListTitle}>
-            {selectedList ? selectedList.title : 'Select a list'}
-          </Text>
-          <Text style={styles.listCount}>
-            {groceryLists.length} {groceryLists.length === 1 ? 'list' : 'lists'} total
-          </Text>
-          <Text style={styles.placeholder}>Items will appear here</Text>
+          <View style={styles.dropdownContainer}>
+            <ListDropdown
+              selectedList={selectedList}
+              groceryLists={groceryLists}
+              onSelectList={handleSelectList}
+              onCreateNew={handleOpenModal}
+            />
+          </View>
+          
+          <View style={styles.contentArea}>
+            <Text style={styles.listCount}>
+              {groceryLists.length} {groceryLists.length === 1 ? 'list' : 'lists'} total
+            </Text>
+            
+            <View style={styles.placeholderContainer}>
+              <Text style={styles.placeholder}>
+                {selectedList 
+                  ? `Items from "${selectedList.title}" will appear here`
+                  : 'Select a list to view items'
+                }
+              </Text>
+            </View>
+          </View>
         </View>
       )}
-
+  
       <CreateListModal
         visible={isModalVisible}
         onClose={handleCloseModal}
         onCreateList={handleCreateList}
       />
-    </View>
+  </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
     backgroundColor: '#fff',
   },
-  text: {
-    fontSize: 24,
-    fontWeight: 'bold',
-  },
   listContainer: {
-    alignItems: 'center',
-    paddingHorizontal: 40,
+    flex: 1,
   },
-  selectedListTitle: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    marginBottom: 8,
+  dropdownContainer: {
+    paddingHorizontal: 20,
+    paddingTop: 20,
+    paddingBottom: 16,
+    backgroundColor: '#fff',
+    borderBottomWidth: 1,
+    borderBottomColor: '#f0f0f0',
+  },
+  contentArea: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 20,
   },
   listCount: {
     fontSize: 14,
@@ -123,6 +158,10 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#999',
     fontStyle: 'italic',
+    textAlign: 'center',
+  },
+  placeholderContainer: {
+    alignItems: 'center',
   },
   emptyState: {
     alignItems: 'center',
