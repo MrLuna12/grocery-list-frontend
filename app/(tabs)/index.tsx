@@ -1,5 +1,5 @@
 import { StyleSheet, Text, View, TouchableOpacity } from 'react-native';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { createGroceryList, fetchGroceryLists, GroceryList } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
 import CreateListModal from '../../components/CreateListModal';
@@ -23,6 +23,7 @@ function EmptyState({ onCreateFirstList }: EmptyStateProps) {
 export default function HomeScreen() {
   const [groceryLists, setGroceryLists] = useState<GroceryList[]>([]);
   const [isModalVisible, setIsModalVisible] = useState(false);
+  const [selectedList, setSelectedList] = useState<GroceryList | null>(null);
   const { getToken } = useAuth();
 
   const handleOpenModal = () => {
@@ -33,26 +34,55 @@ export default function HomeScreen() {
     setIsModalVisible(false);
   };
 
+  const loadGroceryLists = async () => {
+    try {
+      const token = await getToken();
+      if (!token) return;
+
+      const lists = await fetchGroceryLists(token);
+      setGroceryLists(lists);
+
+      if (lists.length > 0 && !selectedList) {
+        setSelectedList(lists[0]);
+      }
+    } catch (error) {
+      console.error('Error loading grocery lists:', error);
+    }
+  };
+
   const handleCreateList = async (listName: string) => {
     const token = await getToken();
-    
+
     if (!token) {
       throw new Error('Please log in again');
     }
 
     const newList = await createGroceryList({ title: listName }, token);
     console.log('Created list:', newList);
-    
-    const allLists = await fetchGroceryLists(token);
-    setGroceryLists(allLists);
+
+    await loadGroceryLists();
+
+    setSelectedList(newList);
   };
+
+useEffect(() => {
+  loadGroceryLists();
+}, []);
 
   return (
     <View style={styles.container}>
       {groceryLists.length === 0 ? (
         <EmptyState onCreateFirstList={handleOpenModal} />
       ) : (
-        <Text style={styles.text}>You have {groceryLists.length} lists!</Text>
+        <View style={styles.listContainer}>
+          <Text style={styles.selectedListTitle}>
+            {selectedList ? selectedList.title : 'Select a list'}
+          </Text>
+          <Text style={styles.listCount}>
+            {groceryLists.length} {groceryLists.length === 1 ? 'list' : 'lists'} total
+          </Text>
+          <Text style={styles.placeholder}>Items will appear here</Text>
+        </View>
       )}
 
       <CreateListModal
@@ -74,6 +104,25 @@ const styles = StyleSheet.create({
   text: {
     fontSize: 24,
     fontWeight: 'bold',
+  },
+  listContainer: {
+    alignItems: 'center',
+    paddingHorizontal: 40,
+  },
+  selectedListTitle: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    marginBottom: 8,
+  },
+  listCount: {
+    fontSize: 14,
+    color: '#666',
+    marginBottom: 20,
+  },
+  placeholder: {
+    fontSize: 16,
+    color: '#999',
+    fontStyle: 'italic',
   },
   emptyState: {
     alignItems: 'center',
