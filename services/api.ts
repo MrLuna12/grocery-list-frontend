@@ -30,7 +30,7 @@ interface Item {
     id: number;
     name: string;
     quantity: number;
-    completed: boolean;
+    checked_at: Date;
     created_at: string;
     updated_at: string;
 }
