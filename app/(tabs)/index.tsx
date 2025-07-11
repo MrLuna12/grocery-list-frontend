@@ -1,17 +1,22 @@
-import { StyleSheet, Text, View, TouchableOpacity, ActivityIndicator } from 'react-native';
-import { useState, useEffect } from 'react';
+import { MaterialIcons } from '@expo/vector-icons';
+import { useEffect, useState } from 'react';
+import { ActivityIndicator, StyleSheet, Text, TouchableOpacity, View, FlatList } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { createGroceryList, fetchGroceryLists, GroceryList } from '../../services/api';
-import { useAuth } from '../../context/AuthContext';
 import CreateListModal from '../../components/CreateListModal';
 import ListDropdown from '../../components/ListDropdown';
-import { MaterialIcons } from '@expo/vector-icons';
+import { useAuth } from '../../context/AuthContext';
+import { createGroceryList, fetchGroceryLists, GroceryList } from '../../services/api';
 
-interface EmptyStateProps {
+interface EmptyListsStateProps {
   onCreateFirstList: () => void;
 }
 
-function EmptyState({ onCreateFirstList }: EmptyStateProps) {
+interface EmptyItemsStateProps {
+  onCreateFirstItem: () => void;
+  selectedList: GroceryList;
+}
+
+function EmptyListsState({ onCreateFirstList }: EmptyListsStateProps) {
   return (
     <View style={styles.emptyState}>
       <Text style={styles.emptyTitle}>You have no grocery lists yet!</Text>
@@ -23,19 +28,40 @@ function EmptyState({ onCreateFirstList }: EmptyStateProps) {
   );
 }
 
+function EmptyItemsState({ onCreateFirstItem, selectedList }: EmptyItemsStateProps) {
+  return (
+    <View style={styles.emptyState}>
+      <Text style={styles.emptyTitle}>You have no grocery items yet!</Text>
+      <Text style={styles.emptySubtitle}>Add your first item to your {selectedList.title} list</Text>
+      <TouchableOpacity style={styles.createButton} onPress={onCreateFirstItem}>
+        <Text style={styles.createButtonText}>Create First Item</Text>
+      </TouchableOpacity>
+    </View>
+  );
+}
+
 export default function HomeScreen() {
   const [groceryLists, setGroceryLists] = useState<GroceryList[]>([]);
-  const [isModalVisible, setIsModalVisible] = useState(false);
+  const [isListModalVisible, setIsListModalVisible] = useState(false);
+  const [isItemModalVisible, setIsItemModalVisible] = useState(false);
   const [selectedList, setSelectedList] = useState<GroceryList | null>(null);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const { getToken, user, logout } = useAuth();
 
-  const handleOpenModal = () => {
-    setIsModalVisible(true);
+  const handleOpenListModal = () => {
+    setIsListModalVisible(true);
   };
 
-  const handleCloseModal = () => {
-    setIsModalVisible(false);
+  const handleCloseListModal = () => {
+    setIsListModalVisible(false);
+  };
+
+  const handleOpenItemModal = () => {
+    setIsItemModalVisible(true);
+  };
+
+  const handleCloseItemModal = () => {
+    setIsItemModalVisible(false);
   };
 
   const loadGroceryLists = async () => {
@@ -81,6 +107,10 @@ export default function HomeScreen() {
     setSelectedList(list);
   };
 
+  const handleCreateItem = () => {
+    console.log('Create Item');
+  }
+
   const handleLogout = async () => {
     setIsLoggingOut(true);
     await logout();
@@ -105,7 +135,7 @@ export default function HomeScreen() {
               selectedList={selectedList}
               groceryLists={groceryLists}
               onSelectList={handleSelectList}
-              onCreateNew={handleOpenModal}
+              onCreateNew={handleOpenListModal}
             />
           </View>
         )}
@@ -123,30 +153,19 @@ export default function HomeScreen() {
       </View>
 
       {groceryLists.length === 0 ? (
-        <EmptyState onCreateFirstList={handleOpenModal} />
+        <EmptyListsState onCreateFirstList={handleOpenListModal} />
       ) : (
         <View style={styles.listContainer}>
           {/* Main content area */}
           <View style={styles.contentArea}>
-            <Text style={styles.listCount}>
-              {groceryLists.length} {groceryLists.length === 1 ? 'list' : 'lists'} total
-            </Text>
-
-            <View style={styles.placeholderContainer}>
-              <Text style={styles.placeholder}>
-                {selectedList
-                  ? `Items from "${selectedList.title}" will appear here`
-                  : 'Select a list to view items'
-                }
-              </Text>
-            </View>
+            <EmptyItemsState selectedList={selectedList} onCreateFirstItem={handleCreateItem} />
           </View>
         </View>
       )}
 
       <CreateListModal
-        visible={isModalVisible}
-        onClose={handleCloseModal}
+        visible={isListModalVisible}
+        onClose={handleCloseListModal}
         onCreateList={handleCreateList}
       />
     </SafeAreaView>
@@ -220,7 +239,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   emptyTitle: {
-    fontSize: 24,
+    fontSize: 20,
     fontWeight: 'bold',
     textAlign: 'center',
     marginBottom: 10,
