@@ -126,8 +126,6 @@ export default function HomeScreen() {
         <EmptyState onCreateFirstList={handleOpenModal} />
       ) : (
         <View style={styles.listContainer}>
-          {/* Remove the dropdownContainer section - dropdown is now in header */}
-
           {/* Main content area */}
           <View style={styles.contentArea}>
             <Text style={styles.listCount}>
