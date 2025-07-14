@@ -39,6 +39,11 @@ interface CreateGroceryListRequest {
     title: string;
 }
 
+interface CreateItemRequest {
+    name: string;
+    quantity: number;
+}
+
 // Secure API configuration
 const getApiUrl = (): string => {
     const configUrl = Constants.expoConfig?.extra?.apiUrl;
@@ -184,6 +189,32 @@ export async function createGroceryList(data: CreateGroceryListRequest, token: s
     return fetchAPI('/grocery_lists', {
         method: 'POST',
         body: JSON.stringify({ title: titleValidation.sanitized }),
+    }, token);
+}
+
+export async function createItem(listId: number, data: CreateItemRequest, token: string): Promise<Item> {
+    if (!token) {
+        throw new Error('Authentication required');
+    }
+
+    if (!listId || listId <= 0) {
+        throw new Error('Invalid list ID');
+    }
+
+    if (!data.name || data.name.trim().length === 0) {
+        throw new Error('Item name is required');
+    }
+
+    if (!data.quantity || data.quantity <= 0) {
+        throw new Error('Quantity must be greater than 0');
+    }
+
+    return fetchAPI(`/grocery_lists/${listId}/items`, {
+        method: 'POST',
+        body: JSON.stringify({ 
+            name: data.name.trim(),
+            quantity: data.quantity 
+        }),
     }, token);
 }
 
