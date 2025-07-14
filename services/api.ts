@@ -232,6 +232,20 @@ export async function fetchGroceryListById(id: number, token: string): Promise<G
     }, token);
 }
 
+export async function fetchGroceryItems(listId: number, token: string): Promise<Item[]> {
+    if (!token) {
+        throw new Error('Authentication required');
+    }
+
+    if (!listId || listId <= 0) {
+        throw new Error('Invalid list ID');
+    }
+
+    return fetchAPI(`/grocery_lists/${listId}/items`, {
+        method: 'GET',
+    }, token);
+}
+
 // Export types for use in components
 export type {
     GroceryList,
