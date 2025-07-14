@@ -1,6 +1,6 @@
 import { MaterialIcons } from '@expo/vector-icons';
 import { useEffect, useState } from 'react';
-import { ActivityIndicator, StyleSheet, Text, TouchableOpacity, View, FlatList } from 'react-native';
+import { ActivityIndicator, FlatList, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import CreateListModal from '../../components/CreateListModal';
 import ListDropdown from '../../components/ListDropdown';
@@ -12,7 +12,6 @@ interface EmptyListsStateProps {
 }
 
 interface EmptyItemsStateProps {
-  onCreateFirstItem: () => void;
   selectedList: GroceryList;
 }
 
@@ -28,14 +27,11 @@ function EmptyListsState({ onCreateFirstList }: EmptyListsStateProps) {
   );
 }
 
-function EmptyItemsState({ onCreateFirstItem, selectedList }: EmptyItemsStateProps) {
+function EmptyItemsState({ selectedList }: EmptyItemsStateProps) {
   return (
     <View style={styles.emptyState}>
       <Text style={styles.emptyTitle}>You have no grocery items yet!</Text>
       <Text style={styles.emptySubtitle}>Add your first item to your {selectedList.title} list</Text>
-      <TouchableOpacity style={styles.createButton} onPress={onCreateFirstItem}>
-        <Text style={styles.createButtonText}>Create First Item</Text>
-      </TouchableOpacity>
     </View>
   );
 }
@@ -157,9 +153,22 @@ export default function HomeScreen() {
       ) : (
         <View style={styles.listContainer}>
           {/* Main content area */}
-          <View style={styles.contentArea}>
-            <EmptyItemsState selectedList={selectedList} onCreateFirstItem={handleCreateItem} />
-          </View>
+          {selectedList!.items?.length === 0 ? (
+            <View style={styles.contentArea}>
+              <EmptyItemsState selectedList={selectedList!} />
+            </View>
+          ) : (
+            <View style={styles.contentArea}>
+              <FlatList
+                data={selectedList!.items}
+                renderItem={({ item }) => <Text> {item.name} </Text>}
+                keyExtractor={item => item.id.toString()}
+              />
+            </View>
+          )}
+          <TouchableOpacity style={styles.createItemButton} onPress={handleOpenItemModal}>
+            <MaterialIcons name="add" size={24} color="#fff" />
+          </TouchableOpacity>
         </View>
       )}
 
@@ -256,6 +265,27 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     marginTop: 24,
   },
+
+  createItemButton: {
+    position: 'absolute',
+    bottom: 20,
+    right: 20,
+    backgroundColor: '#007AFF',
+    borderRadius: 28,
+    width: 56,
+    height: 56,
+    justifyContent: 'center',
+    alignItems: 'center',
+    elevation: 8,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+  },
+
   createButtonText: {
     color: '#fff',
     fontSize: 16,
