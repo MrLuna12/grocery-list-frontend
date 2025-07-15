@@ -5,7 +5,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import CreateListModal from '../../components/CreateListModal';
 import ListDropdown from '../../components/ListDropdown';
 import { useAuth } from '../../context/AuthContext';
-import { createGroceryList, fetchGroceryLists, GroceryList } from '../../services/api';
+import { createGroceryList, createItem, fetchGroceryItems, fetchGroceryLists, GroceryList, Item } from '../../services/api';
 
 interface EmptyListsStateProps {
   onCreateFirstList: () => void;
@@ -42,6 +42,7 @@ export default function HomeScreen() {
   const [isItemModalVisible, setIsItemModalVisible] = useState(false);
   const [selectedList, setSelectedList] = useState<GroceryList | null>(null);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const [items, setItems] = useState<Item[]>([]);
   const { getToken, user, logout } = useAuth();
 
   const handleOpenListModal = () => {
@@ -103,9 +104,36 @@ export default function HomeScreen() {
     setSelectedList(list);
   };
 
-  const handleCreateItem = () => {
-    console.log('Create Item');
-  }
+  const loadItemsForList = async (listId: number) => {
+    try {
+      const token = await getToken();
+      if (!token) return;
+
+      const items = await fetchGroceryItems(listId, token);
+      setItems(items);
+    } catch (error) {
+      console.error('Error loading items:', error);
+      setItems([]);
+    }
+  };
+
+  const handleCreateItem = async (itemName: string, quantity: number) => {
+    const token = await getToken();
+
+    if (!token) {
+      throw new Error('Please log in again');
+    }
+
+    if (!selectedList) {
+      throw new Error('Please select a list first');
+    }
+
+    const newItem = await createItem(selectedList.id, { name: itemName, quantity }, token);
+
+    await loadItemsForList(selectedList.id);
+
+    console.log('Item created successfully:', newItem);
+  };
 
   const handleLogout = async () => {
     setIsLoggingOut(true);
@@ -176,6 +204,12 @@ export default function HomeScreen() {
         visible={isListModalVisible}
         onClose={handleCloseListModal}
         onCreateList={handleCreateList}
+      />
+
+      <CreateItemModal
+        visible={isItemModalVisible}
+        onClose={handleCloseItemModal}
+        onCreateItem={handleCreateItem}
       />
     </SafeAreaView>
   );
