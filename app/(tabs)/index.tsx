@@ -100,9 +100,8 @@ export default function HomeScreen() {
       throw new Error('Please log in again');
     }
 
-    const newList = await createGroceryList({ title: listName }, token);
+    await createGroceryList({ title: listName }, token);
     await loadGroceryLists();
-    setSelectedList(newList);
   };
 
   const handleSelectList = (list: GroceryList) => {
