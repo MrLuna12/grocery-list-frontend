@@ -251,6 +251,7 @@ export type {
     GroceryList,
     Item,
     CreateGroceryListRequest,
+    CreateItemRequest,
     LoginResponse,
     RegisterResponse
 };
