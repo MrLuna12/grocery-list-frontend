@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import { ActivityIndicator, FlatList, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import CreateListModal from '../../components/CreateListModal';
+import CreateItemModal from '@/components/CreateItemModal';
 import ListDropdown from '../../components/ListDropdown';
 import { useAuth } from '../../context/AuthContext';
 import { createGroceryList, createItem, fetchGroceryItems, fetchGroceryLists, GroceryList, Item } from '../../services/api';
@@ -74,14 +75,18 @@ export default function HomeScreen() {
           const stillExists = lists.find(list => list.id === selectedList.id);
           if (stillExists) {
             setSelectedList(stillExists);
+            await loadItemsForList(stillExists.id);
           } else {
             setSelectedList(lists[0]);
+            await loadItemsForList(lists[0].id);
           }
         } else {
           setSelectedList(lists[0]);
+          await loadItemsForList(lists[0].id);
         }
       } else {
         setSelectedList(null);
+        setItems([]);
       }
     } catch (error) {
       console.error('Error loading grocery lists:', error);
@@ -102,6 +107,7 @@ export default function HomeScreen() {
 
   const handleSelectList = (list: GroceryList) => {
     setSelectedList(list);
+    loadItemsForList(list.id);
   };
 
   const loadItemsForList = async (listId: number) => {
@@ -181,14 +187,14 @@ export default function HomeScreen() {
       ) : (
         <View style={styles.listContainer}>
           {/* Main content area */}
-          {selectedList!.items?.length === 0 ? (
+          {items.length === 0 ? (
             <View style={styles.contentArea}>
               <EmptyItemsState selectedList={selectedList!} />
             </View>
           ) : (
             <View style={styles.contentArea}>
               <FlatList
-                data={selectedList!.items}
+                data={items}
                 renderItem={({ item }) => <Text> {item.name} </Text>}
                 keyExtractor={item => item.id.toString()}
               />
