@@ -1,9 +1,10 @@
+import CreateItemModal from '@/components/CreateItemModal';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, FlatList, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import BouncyCheckbox from "react-native-bouncy-checkbox";
 import { SafeAreaView } from 'react-native-safe-area-context';
 import CreateListModal from '../../components/CreateListModal';
-import CreateItemModal from '@/components/CreateItemModal';
 import ListDropdown from '../../components/ListDropdown';
 import { useAuth } from '../../context/AuthContext';
 import { createGroceryList, createItem, fetchGroceryItems, fetchGroceryLists, GroceryList, Item } from '../../services/api';
@@ -194,8 +195,28 @@ export default function HomeScreen() {
             <View style={styles.contentArea}>
               <FlatList
                 data={items}
-                renderItem={({ item }) => <Text> {item.name} </Text>}
+                renderItem={({ item }) => {
+                  return (
+                    <View style={styles.itemContainer}>
+                      <View style={styles.checkboxContainer}>
+                        <BouncyCheckbox
+                          text={item.name}
+                          size={24}
+                          fillColor="#007AFF"
+                          unFillColor="#FFFFFF"
+                          iconStyle={{ borderColor: "#E0E0E0", borderRadius: 6 }}
+                          innerIconStyle={{ borderWidth: 2, borderRadius: 4 }}
+                          textStyle={styles.itemText}
+                          onPress={(isChecked) => { console.log(isChecked) }}
+                        />
+                      </View>
+                      <Text style={styles.quantityText}>Qty: {item.quantity}</Text>
+                    </View>
+                  );
+                }}
                 keyExtractor={item => item.id.toString()}
+                contentContainerStyle={styles.listContent}
+                showsVerticalScrollIndicator={false}
               />
             </View>
           )}
@@ -261,9 +282,42 @@ const styles = StyleSheet.create({
   // Main content area
   contentArea: {
     flex: 1,
+    padding: 10,
+  },
+  // List styles
+  listContent: {
+    paddingVertical: 8
+  },
+  itemContainer: {
+    flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: 20,
+    backgroundColor: '#FFFFFF',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    marginVertical: 4,
+    borderRadius: 12,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 1,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 2,
+  },
+  checkboxContainer: {
+    flex: 1,
+  },
+  itemText: {
+    fontSize: 16,
+    color: '#333',
+    fontWeight: '500',
+    marginLeft: 12,
+  },
+  quantityText: {
+    fontSize: 14,
+    color: '#666',
+    fontWeight: '400',
   },
   listCount: {
     fontSize: 14,
