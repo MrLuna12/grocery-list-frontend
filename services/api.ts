@@ -1,5 +1,5 @@
 import Constants from 'expo-constants';
-import { jwtDecode } from 'jwt-decode'; 
+import { jwtDecode } from 'jwt-decode';
 import { ValidationUtils, SecurityUtils } from '../utils/validation';
 
 // Types for our API responses
@@ -31,7 +31,7 @@ interface Item {
     id: number;
     name: string;
     quantity: number;
-    checked_at: Date;
+    checked_at: string | null;
     created_at: string;
     updated_at: string;
 }
@@ -251,6 +251,25 @@ export async function fetchGroceryItems(listId: number, token: string): Promise<
 
     return fetchAPI(`/grocery_lists/${listId}/items`, {
         method: 'GET',
+    }, token);
+}
+
+export async function updateItem(listId: number, itemId: number, data: Partial<Item>, token: string): Promise<Item> {
+    if (!token) {
+        throw new Error('Authentication required');
+    }
+
+    if (!listId || listId <= 0) {
+        throw new Error('Invalid list ID');
+    }
+
+    if (!itemId || itemId <= 0) {
+        throw new Error('Invalid item ID');
+    }
+
+    return fetchAPI(`/grocery_lists/${listId}/items/${itemId}`, {
+        method: 'PUT',
+        body: JSON.stringify(data),
     }, token);
 }
 

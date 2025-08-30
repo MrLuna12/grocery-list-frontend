@@ -7,7 +7,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import CreateListModal from '../../components/CreateListModal';
 import ListDropdown from '../../components/ListDropdown';
 import { useAuth } from '../../context/AuthContext';
-import { createGroceryList, createItem, fetchGroceryItems, fetchGroceryLists, GroceryList, Item } from '../../services/api';
+import { createGroceryList, createItem, fetchGroceryItems, fetchGroceryLists, GroceryList, Item, updateItem } from '../../services/api';
 
 interface EmptyListsStateProps {
   onCreateFirstList: () => void;
@@ -145,6 +145,21 @@ export default function HomeScreen() {
     console.log('Item created successfully:', newItem);
   };
 
+  const handleToggleCheck = async (item: Item) => {
+    try {
+      const token = await getToken();
+      if (!token || !selectedList) return;
+
+      const newCheckedAt = item.checked_at ? null : new Date().toISOString();
+      await updateItem(selectedList.id, item.id, { checked_at: newCheckedAt }, token);
+      
+      // Refresh the items to get the updated state
+      await loadItemsForList(selectedList.id);
+    } catch (error) {
+      console.error('Error toggling item check:', error);
+    }
+  };
+
   const handleLogout = async () => {
     setIsLoggingOut(true);
     await logout();
@@ -210,8 +225,12 @@ export default function HomeScreen() {
                           unFillColor="#FFFFFF"
                           iconStyle={{ borderColor: "#E0E0E0", borderRadius: 6 }}
                           innerIconStyle={{ borderWidth: 2, borderRadius: 4 }}
-                          textStyle={styles.itemText}
-                          onPress={(isChecked) => { console.log(isChecked) }}
+                          textStyle={[
+                            styles.itemText,
+                            item.checked_at && styles.checkedItemText
+                          ]}
+                          isChecked={!!item.checked_at}
+                          onPress={() => handleToggleCheck(item)}
                         />
                       </View>
                       <Text style={styles.quantityText}>Qty: {item.quantity}</Text>
@@ -317,6 +336,10 @@ const styles = StyleSheet.create({
     color: '#333',
     fontWeight: '500',
     marginLeft: 12,
+  },
+  checkedItemText: {
+    textDecorationLine: 'line-through',
+    color: '#999',
   },
   quantityText: {
     fontSize: 14,
