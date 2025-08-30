@@ -90,6 +90,10 @@ export default function HomeScreen() {
         setItems([]);
       }
     } catch (error) {
+      if (error instanceof Error && error.message === 'TOKEN_EXPIRED') {
+        console.log("loging out the user")
+        await logout();
+      }
       console.error('Error loading grocery lists:', error);
     }
   };

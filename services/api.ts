@@ -1,4 +1,5 @@
 import Constants from 'expo-constants';
+import { jwtDecode } from 'jwt-decode'; 
 import { ValidationUtils, SecurityUtils } from '../utils/validation';
 
 // Types for our API responses
@@ -63,6 +64,13 @@ const API_URL = getApiUrl();
 
 // Helper function for making authenticated API requests
 async function fetchAPI(endpoint: string, options: RequestInit = {}, token?: string) {
+    if (token) {
+        const decoded_token = jwtDecode(token);
+        const currentTime = Date.now() / 1000;
+        if (typeof decoded_token.exp === 'number' && decoded_token.exp < currentTime) {
+            throw new Error('TOKEN_EXPIRED');
+        }
+    }
     try {
         const headers: Record<string, string> = {
             'Content-Type': 'application/json',
